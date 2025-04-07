@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class CurrencyConverterMaterialPage extends StatefulWidget{
-  State createState () => _CurrencyConverterMaterialPageState();
-}
-class _CurrencyConverterMaterialPageState extends State{
+   const CurrencyConverterMaterialPage({super.key});
+  
+  @override
+  State<CurrencyConverterMaterialPage> createState ()=> _CurrencyConverterMaterialPageState();}
+
+
+class _CurrencyConverterMaterialPageState extends State<CurrencyConverterMaterialPage> {
+  double result = 0;
+  final textEditingController = TextEditingController();
+  
   @override
   Widget build(BuildContext context) {
-    return const Scaffold();
-  }
-}
-
-
-
-class CurrencyConverterMaterialPageState extends StatelessWidget {
-  const CurrencyConverterMaterialPageState({super.key});
-  @override
-  Widget build(BuildContext context) {
-    double result = 0;
-    final TextEditingController textEditingController = TextEditingController();
+   
     
     final border = OutlineInputBorder(
       borderSide: const BorderSide(
@@ -73,8 +71,33 @@ class CurrencyConverterMaterialPageState extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
-                onPressed: (){
-                  result = double.parse(textEditingController.text)*130;
+                onPressed: () async {
+                  const apiUrl =
+                      'https://api.exchangerate-api.com/v4/latest/USD'; // Example API URL
+                  try {
+                    final response = await http.get(Uri.parse(apiUrl));
+                    if (response.statusCode == 200) {
+                      final data = json.decode(response.body);
+                      final exchangeRate =
+                          data['rates']['KES']; // Fetch the rate for Kenyan Shilling (KES)
+
+                      setState(() {
+                        String input = textEditingController.text.replaceAll(
+                          ',',
+                          '.',
+                        );
+                        result =
+                            double.tryParse(input) != null
+                                ? double.parse(input) * exchangeRate
+                                : 0;
+                      });
+                    } else {
+                      throw Exception('Failed to fetch exchange rate');
+                    }
+                  } catch (e) {
+                    // Handle errors (e.g., show a Snackbar or AlertDialog)
+                    print('Error: $e');
+                  }
                 },
                 style: ButtonStyle(
                   elevation: WidgetStatePropertyAll(15),
@@ -93,5 +116,16 @@ class CurrencyConverterMaterialPageState extends StatelessWidget {
         ),
       ),
     );
+  }
+  }
+
+
+
+
+class CurrencyConverterMaterialPageState extends StatelessWidget {
+  const CurrencyConverterMaterialPageState({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }
